@@ -3,7 +3,7 @@
    API_BASE: point to your Flask backend
 ═══════════════════════════════════════════════════════ */
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://shieldai-fraud-detection-1.onrender.com/api";
 
 // ── State ─────────────────────────────────────────────
 let hourlyChart = null;

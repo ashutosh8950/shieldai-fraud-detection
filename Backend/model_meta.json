@@ -1,0 +1,17 @@
+{
+  "features": [
+    "amount",
+    "hour",
+    "day_of_week",
+    "distance_from_home",
+    "merchant_risk",
+    "prev_txn_gap_hrs",
+    "is_online",
+    "num_daily_txns",
+    "velocity_score"
+  ],
+  "accuracy": 1.0,
+  "roc_auc": 1.0,
+  "model_type": "RandomForestClassifier",
+  "training_rows": 8000
+}

@@ -1,20 +1,27 @@
 """
 app.py — Flask REST API for AI Fraud Detection System
-Run: python app.py
+Run (dev): python app.py
+Run (prod): gunicorn app:app
 """
 
 import os, json, sqlite3, datetime, hashlib, secrets
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_from_directory
 from flask_cors import CORS
 import joblib, numpy as np
 
 app = Flask(__name__)
-CORS(app)  # allow frontend on any origin during development
+CORS(app)  # allow all origins (frontend is served from same service)
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+# When run by gunicorn from rootDir=Backend, __file__ is in Backend/
+# Frontend files are at ../Frontend/ relative to Backend/
+_HERE         = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR  = os.path.join(_HERE, "..", "Frontend")
 
 # ── Config ───────────────────────────────────────────────────────────────────
-DB_PATH    = "database.db"
-MODEL_PATH = "model.pkl"
-META_PATH  = "model_meta.json"
+DB_PATH    = os.path.join(_HERE, "database.db")
+MODEL_PATH = os.path.join(_HERE, "model.pkl")
+META_PATH  = os.path.join(_HERE, "model_meta.json")
 
 FEATURES = [
     "amount", "hour", "day_of_week", "distance_from_home",
@@ -119,6 +126,21 @@ def explain_fraud(features, prob):
     return reasons
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+# ── Serve Frontend Static Files ───────────────────────────────────────────────
+@app.route("/")
+def serve_index():
+    """Serve the main frontend page."""
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+@app.route("/<path:filename>")
+def serve_static(filename):
+    """Serve frontend CSS, JS, and other static assets."""
+    # Don't serve API routes through this handler
+    if filename.startswith("api/"):
+        return jsonify({"error": "Not found"}), 404
+    return send_from_directory(FRONTEND_DIR, filename)
+
 
 @app.route("/api/health", methods=["GET"])
 def health():
@@ -298,10 +320,13 @@ def resolve_alert(alert_id):
     return jsonify({"success": True})
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# ── Module-level startup (runs for both gunicorn and direct python app.py) ─────
+# gunicorn imports this module, so we MUST call these here, not only in __main__
+init_db()
+load_model()
+
+# ── Entry point (direct run only) ─────────────────────────────────────────────
 if __name__ == "__main__":
-    init_db()
-    load_model()
     print("\n🚀  Fraud Detection API running on http://localhost:5000\n")
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)

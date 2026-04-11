@@ -1,6 +1,7 @@
-backend/venv/
-backend/model.pkl
-backend/database.db
+Backend/venv/
+# model.pkl is intentionally committed so Render can skip retraining on startup
+# backend/model.pkl
+Backend/database.db
 __pycache__/
 *.pyc
 .env
